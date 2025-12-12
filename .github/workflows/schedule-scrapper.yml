@@ -75,7 +75,7 @@ jobs:
             import os, glob, json, base64, sys
             import requests
 
-            PERIODO = "II 2025"
+            #PERIODO = "II 2025"
             
             tenant = os.environ["GRAPH_TENANT_ID"]
             client_id = os.environ["GRAPH_CLIENT_ID"]
@@ -116,7 +116,7 @@ jobs:
   
             payload = {
                 "message": {
-                    "subject": "REPORTE DE CALAS SITRAPESCA CN {PERIODO}",
+                    "subject": "REPORTE DE CALAS SITRAPESCA CN II 2025",
                     "body": {"contentType": "Text", "content": "Se adjuntan los reportes de SITRAPESCA. \n\nSaludos,"},
                     "toRecipients":  [{"emailAddress": {"address": x}} for x in to_list],
                     "ccRecipients":  [{"emailAddress": {"address": x}} for x in cc_list],
