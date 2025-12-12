@@ -63,41 +63,77 @@ jobs:
           echo "Archivos descargados:"
           ls -lah "$DOWNLOAD_DIR" || true
 
-      - name: Send CSVs to SNP via Graph API
+      - name: Send CSVs to SNP via Microsoft Graph (direct)
         shell: bash
         env:
-          GRAPH_CLIENT_ID: ${{ secrets.GRAPH_CLIENT_ID }}
-          GRAPH_CLIENT_SECRET: ${{ secrets.GRAPH_CLIENT_SECRET }}
-          GRAPH_TENANT_ID: ${{ secrets.GRAPH_TENANT_ID }}
+            GRAPH_TENANT_ID: ${{ secrets.GRAPH_TENANT_ID }}
+            GRAPH_CLIENT_ID: ${{ secrets.GRAPH_CLIENT_ID }}
+            GRAPH_CLIENT_SECRET: ${{ secrets.GRAPH_CLIENT_SECRET }}
+            DOWNLOAD_DIR: ${{ env.DOWNLOAD_DIR }}
         run: |
-            ACCESS_TOKEN=$(curl -X POST https://login.microsoftonline.com/${GRAPH_TENANT_ID}/oauth2/v2.0/token \
-              -d "client_id=${GRAPH_CLIENT_ID}" \
-              -d "client_secret=${GRAPH_CLIENT_SECRET}" \
-              -d "scope=https://graph.microsoft.com/.default" \
-              -d "grant_type=client_credentials" | jq -r '.access_token')
-
-            TO="['ccarhuayo@exalmar.com.pe','cmarin@exalmar.com.pe']"
-            CC="['ccarhuayo@exalmar.com.pe']"
-            BCC="['cmarin@exalmar.com.pe']"
-            SUBJECT="PRUEBA TEST SNP"
-            BODY="Adjunto CSVs."
+            python - << 'PY'
+            import os, glob, json, base64, sys
+            import requests
+  
+            tenant = os.environ["GRAPH_TENANT_ID"]
+            client_id = os.environ["GRAPH_CLIENT_ID"]
+            client_secret = os.environ["GRAPH_CLIENT_SECRET"]
+            download_dir = os.environ["DOWNLOAD_DIR"]
+  
+            # Token 
+            token_url = f"https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token"
+            token_resp = requests.post(token_url, data={
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "scope": "https://graph.microsoft.com/.default",
+                "grant_type": "client_credentials",
+            }, timeout=30)
+            token_resp.raise_for_status()
+            access_token = token_resp.json()["access_token"]
+  
+            # Leer CSVs
+            files = sorted(glob.glob(os.path.join(download_dir, "*.csv")))
+            if not files:
+                print(f"No hay CSVs en {download_dir}")
+                sys.exit(1)
+  
+            attachments = []
+            for path in files:
+                with open(path, "rb") as f:
+                    content_b64 = base64.b64encode(f.read()).decode("utf-8")
+                attachments.append({
+                    "@odata.type": "#microsoft.graph.fileAttachment",
+                    "name": os.path.basename(path),
+                    "contentType": "text/csv",
+                    "contentBytes": content_b64
+                })
+  
+            to_list  = ["ccarhuayo@exalmar.com.pe","cmarin@exalmar.com.pe"]
+            cc_list  = ["ccarhuayo@exalmar.com.pe"]
+            bcc_list = ["cmarin@exalmar.com.pe"]
+  
+            payload = {
+                "message": {
+                    "subject": "PRUEBA TEST SNP",
+                    "body": {"contentType": "Text", "content": "Adjunto CSVs."},
+                    "toRecipients":  [{"emailAddress": {"address": x}} for x in to_list],
+                    "ccRecipients":  [{"emailAddress": {"address": x}} for x in cc_list],
+                    "bccRecipients": [{"emailAddress": {"address": x}} for x in bcc_list],
+                    "attachments": attachments
+                },
+                "saveToSentItems": "true"
+            }
+  
+            url = f"https://graph.microsoft.com/v1.0/users/exalmarpa@exalmar.com.pe/sendMail"
+            resp = requests.post(url, headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }, json=payload, timeout=60)
+  
+            if resp.status_code not in (202, 200):
+                print("Graph sendMail error:", resp.status_code, resp.text)
+                sys.exit(1)
+  
+            print(f"OK: enviado correo con {len(attachments)} adjuntos desde {sender}")
+            PY
           
-            # Preparar los archivos adjuntos
-            files_args=()
-            shopt -s nullglob
-            for f in $DOWNLOAD_DIR/*.csv; do
-              files_args+=(
-                -F "files=@${f};type=text/csv"
-              )
-            done
-      
-            # Enviar correo con los archivos adjuntos
-            curl -sS -X POST https://graph.microsoft.com/v1.0/users/exalmarpa@exalmar.com.pe/sendMail \
-              -H "Authorization: Bearer $ACCESS_TOKEN" \
-              -H "Content-Type: multipart/form-data" \
-              -F "toRecipients=$TO" \
-              -F "ccRecipients=$CC" \
-              -F "bccRecipients=$BCC" \
-              -F "subject=$SUBJECT" \
-              -F "body=$BODY" \
-              "${files_args[@]}"
