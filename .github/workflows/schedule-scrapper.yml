@@ -3,8 +3,8 @@ name: Scraper Diario to send email to SNP
 # Ejecucion de Descargas Diarias (Last 3 days)
 on:
   schedule:
-    - cron: "45 13 * * *"    # 9AM
-    - cron: "45 19 * * *"    # 3PM
+    - cron: "0 14 * * *"    # 9AM
+    - cron: "0 20 * * *"    # 3PM
 
   workflow_dispatch: {}
 
