@@ -110,9 +110,9 @@ jobs:
                     "contentBytes": content_b64
                 })
   
-            to_list  = ["ccarhuayo@exalmar.com.pe","cmarin@exalmar.com.pe"] #["glecca@snp.org.pe","speraltilla@snp.org.pe","emeneses@snp.org.pe"] 
-            cc_list  = ["ccarhuayo@exalmar.com.pe","cmarin@exalmar.com.pe"] #["jrobles@exalmar.com.pe","jvega@exalmar.com.pe"]
-            bcc_list = ["ccarhuayo@exalmar.com.pe","cmarin@exalmar.com.pe"] #["dabad@exalmar.com.pe","ccarhuayo@exalmar.com.pe","cmarin@exalmar.com.pe"]
+            to_list  = ["glecca@snp.org.pe","speraltilla@snp.org.pe","emeneses@snp.org.pe"] 
+            cc_list  = ["jrobles@exalmar.com.pe","jvega@exalmar.com.pe"]
+            bcc_list = ["dabad@exalmar.com.pe","ccarhuayo@exalmar.com.pe","cmarin@exalmar.com.pe"]
   
             payload = {
                 "message": {
