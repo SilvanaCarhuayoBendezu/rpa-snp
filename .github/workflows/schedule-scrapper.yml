@@ -74,7 +74,9 @@ jobs:
             python - << 'PY'
             import os, glob, json, base64, sys
             import requests
-  
+
+            PERIODO = "II 2025"
+            
             tenant = os.environ["GRAPH_TENANT_ID"]
             client_id = os.environ["GRAPH_CLIENT_ID"]
             client_secret = os.environ["GRAPH_CLIENT_SECRET"]
@@ -114,8 +116,8 @@ jobs:
   
             payload = {
                 "message": {
-                    "subject": "PRUEBA TEST SNP",
-                    "body": {"contentType": "Text", "content": "Adjunto CSVs."},
+                    "subject": "REPORTE DE CALAS SITRAPESCA CN {PERIODO}",
+                    "body": {"contentType": "Text", "content": "Se adjuntan los reportes de SITRAPESCA. \n\nSaludos,"},
                     "toRecipients":  [{"emailAddress": {"address": x}} for x in to_list],
                     "ccRecipients":  [{"emailAddress": {"address": x}} for x in cc_list],
                     "bccRecipients": [{"emailAddress": {"address": x}} for x in bcc_list],
@@ -134,6 +136,6 @@ jobs:
                 print("Graph sendMail error:", resp.status_code, resp.text)
                 sys.exit(1)
   
-            print(f"OK: enviado correo con {len(attachments)} adjuntos desde {sender}")
+            print(f"OK: enviado correo con {len(attachments)} adjuntos desde exalmarpa@exalmar.com.pe")
             PY
           
